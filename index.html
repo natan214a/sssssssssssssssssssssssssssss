@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notificações Simuladas</title>
+
+<!-- Manifest para PWA -->
+<link rel="manifest" href="manifest.json" />
+
+<!-- Ícone para iOS -->
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/270/270798.png" />
+
+<!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<style>
+  body { font-family: Arial, sans-serif; margin:20px; background:#f9f9f9; }
+  h1 { text-align:center; }
+  label { display:block; margin-top:15px; }
+  input[type=text], input[type=number], input[type=url] { width: 100%; padding:8px; margin-top:5px; box-sizing: border-box; }
+  button { margin-top:20px; padding:10px 15px; font-size:16px; cursor:pointer; }
+  .status { margin-top: 15px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Configurar Notificações Simuladas</h1>
+
+<label>Texto da Notificação:</label>
+<input type="text" id="txtMsg" value="Você recebeu R$ 97,00 via Hotmart!" />
+
+<label>Imagem da Notificação (URL):</label>
+<input type="url" id="txtImg" value="https://www.hotmart.com/img/hm-logo.png" />
+
+<label>Ícone Pequeno (URL):</label>
+<input type="url" id="txtIcon" value="https://www.hotmart.com/favicon.ico" />
+
+<label>Link ao clicar na notificação:</label>
+<input type="url" id="txtLink" value="https://www.hotmart.com" />
+
+<button id="btnSave">Salvar Configurações</button>
+
+<div class="status" id="status"></div>
+
+<script>
+  const appId = "ef1c3564-5f9d-4b72-8781-09af43b8d932";
+
+  const plataformas = [
+    {
+      nome: "Hotmart",
+      mensagem: "Você recebeu R$ 97,00 via Hotmart!",
+      imagem: "https://www.hotmart.com/img/hm-logo.png",
+      icon: "https://www.hotmart.com/favicon.ico",
+      link: "https://www.hotmart.com"
+    },
+    {
+      nome: "Kiwify",
+      mensagem: "Pedido confirmado na Kiwify! R$ 197,00 liberados.",
+      imagem: "https://kiwify.com.br/favicon.ico",
+      icon: "https://kiwify.com.br/favicon.ico",
+      link: "https://kiwify.com.br"
+    },
+    {
+      nome: "Kirvano",
+      mensagem: "Nova venda pela Kirvano: R$ 47,00 creditados!",
+      imagem: "https://kirvano.com.br/favicon.ico",
+      icon: "https://kirvano.com.br/favicon.ico",
+      link: "https://kirvano.com.br"
+    },
+    {
+      nome: "PushIn",
+      mensagem: "Comissão liberada pelo PushIn: R$ 129,00.",
+      imagem: "https://pushin.com.br/favicon.ico",
+      icon: "https://pushin.com.br/favicon.ico",
+      link: "https://pushin.com.br"
+    },
+    {
+      nome: "Pay",
+      mensagem: "Pagamento confirmado via Pay: R$ 257,00 recebido!",
+      imagem: "https://pay.com/favicon.ico",
+      icon: "https://pay.com/favicon.ico",
+      link: "https://pay.com"
+    }
+  ];
+
+  function carregarConfig() {
+    const config = localStorage.getItem("notificacoesSimuladasConfig");
+    if (config) {
+      const cfg = JSON.parse(config);
+      document.getElementById("txtMsg").value = cfg.mensagem || plataformas[0].mensagem;
+      document.getElementById("txtImg").value = cfg.imagem || plataformas[0].imagem;
+      document.getElementById("txtIcon").value = cfg.icon || plataformas[0].icon;
+      document.getElementById("txtLink").value = cfg.link || plataformas[0].link;
+    }
+  }
+
+  function salvarConfig() {
+    const cfg = {
+      mensagem: document.getElementById("txtMsg").value,
+      imagem: document.getElementById("txtImg").value,
+      icon: document.getElementById("txtIcon").value,
+      link: document.getElementById("txtLink").value
+    };
+    localStorage.setItem("notificacoesSimuladasConfig", JSON.stringify(cfg));
+    document.getElementById("status").textContent = "Configurações salvas!";
+  }
+
+  async function iniciarOneSignal() {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({ appId: appId });
+      await OneSignal.showNativePrompt();
+
+      let index = 0;
+      setInterval(() => {
+        const cfg = JSON.parse(localStorage.getItem("notificacoesSimuladasConfig")) || plataformas[index];
+        OneSignal.sendSelfNotification(
+          cfg.mensagem,
+          cfg.link,
+          cfg.imagem,
+          cfg.icon,
+          { data: { foo: "bar" } }
+        );
+        index = (index + 1) % plataformas.length;
+      }, 300000 + Math.floor(Math.random() * 120000)); // 5-7 minutos
+    });
+  }
+
+  document.getElementById("btnSave").addEventListener("click", salvarConfig);
+
+  carregarConfig();
+  iniciarOneSignal();
+</script>
+
+</body>
+</html>
